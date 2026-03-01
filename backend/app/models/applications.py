@@ -1,9 +1,6 @@
 from sqlalchemy import Column, Integer, String, DateTime, Text
 from sqlalchemy.sql import func
-from sqlalchemy.orm import declarative_base
-
-Base = declarative_base()
-
+from app.db.postgres import Base
 
 class JobApplication(Base):
     __tablename__ = "job_applications"

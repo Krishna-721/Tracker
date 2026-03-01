@@ -7,10 +7,6 @@ pydantic==2.7.0
 pydantic-settings==2.2.1
 email-validator==2.1.1
 
-# MongoDB
-motor==3.4.0
-pymongo==4.7.2
-
 # PostgreSQL
 asyncpg==0.29.0
 sqlalchemy[asyncio]==2.0.30
