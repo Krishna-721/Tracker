@@ -12,3 +12,8 @@
 * Added analytics and email routes and updated main.py accordingly
 * Added ML layer with 44 samples that contain some real and synthetic data to train the ml model. 
 * Making use of TF-IDF and logistic regression. 
+
+### Current Trade-ofs: 
+On very little data model has be trained on. Current dataset has only the body and the label, but an email has "Re:", "Fwd:", Long reply chains, Signatures, HTML artifacts. So modifying dataset will be done. 
+
+#### Future enhancements under progress, please wait!
