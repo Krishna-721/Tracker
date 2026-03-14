@@ -11,6 +11,7 @@ from app.api.routes.applications_route import router as application_router
 from app.api.routes.emails_route import router as email_router
 
 from app.api.routes.analytics_route import router as analytics_router
+from app.api.routes.gmail_auth_route import router as gmail_auth_router
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -33,6 +34,8 @@ app.include_router(application_router)
 
 app.include_router(email_router)
 app.include_router(analytics_router)
+
+app.include_router(gmail_auth_router)
 
 @app.get("/")
 async def root():

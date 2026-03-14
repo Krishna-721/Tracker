@@ -8,6 +8,9 @@ class Settings(BaseSettings):
     APP_ENV: str = "development"
     DEBUG: bool = True
     SECRET_KEY: str = "changeme"
+    GOOGLE_CLIENT_ID: str 
+    GOOGLE_CLIENT_SECRET: str
+    GOOGLE_REDIRECT_URI: str 
 
     # PostgreSQL
     POSTGRES_URL: str

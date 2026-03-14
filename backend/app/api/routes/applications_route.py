@@ -7,7 +7,7 @@ from app.db.postgres import get_db
 from app.models.applications import JobApplication
 from app.schemas.application_schema import JobApplicationCreate, JobApplicationResponse
 
-
+from typing import Optional
 router = APIRouter(prefix="/applications",tags=["Applications"])
 
 @router.post("/",response_model=JobApplicationResponse, status_code=201)
@@ -20,9 +20,16 @@ async def create_application(payload: JobApplicationCreate, db: AsyncSession=Dep
     await db.refresh(new_application)
     return new_application
 
-@router.get("/",response_model=list[JobApplicationResponse])
-async def get_all_applications(db : AsyncSession=Depends(get_db)):
-    result=await db.execute(select(JobApplication))
+@router.get("/", response_model=list[JobApplicationResponse])
+async def get_all_applications(db: AsyncSession = Depends(get_db),
+                               page: int = 1, page_size: int = 10, status: Optional[str] = None):
+    query = select(JobApplication)
+
+    if status is not None:
+        query = query.where(JobApplication.status == status)
+
+    query = query.offset((page - 1) * page_size).limit(page_size)
+    result = await db.execute(query)
     return result.scalars().all()
 
 @router.get("/{id}",response_model=JobApplicationResponse)

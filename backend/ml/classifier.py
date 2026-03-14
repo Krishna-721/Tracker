@@ -13,4 +13,5 @@ vectorizer=joblib.load(VECTORIZER_PATH)
 
 def predict_email(text: str):
     new_text=vectorizer.transform([text])
-    return model.predict(new_text)[0]
+    # returning the label and the confidence score
+    return (model.predict(new_text)[0], max(model.predict_proba(new_text)[0]))

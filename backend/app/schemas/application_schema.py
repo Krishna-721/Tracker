@@ -1,7 +1,7 @@
 from pydantic import BaseModel
 from typing import Optional
 from datetime import datetime
-
+from pydantic import ConfigDict
 
 class JobApplicationBase(BaseModel):
     company: Optional[str] = None
@@ -21,8 +21,7 @@ class JobApplicationResponse(JobApplicationBase):
     created_at: datetime
     updated_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config=ConfigDict(from_attributes=True)
 
 class EmailInput(BaseModel):
     subject: str
