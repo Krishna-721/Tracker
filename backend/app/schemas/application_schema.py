@@ -4,6 +4,7 @@ from datetime import datetime
 from pydantic import ConfigDict
 
 class JobApplicationBase(BaseModel):
+    user_id: str
     company: Optional[str] = None
     role: Optional[str] = None
     status: Optional[str] = "applied"

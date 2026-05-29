@@ -19,7 +19,7 @@ from app.gmail.body_parser import extract_email_body
 from ml.classifier import predict_email
 from ml.preprocessor import clean_email
 
-from app.gmail.job_filter import is_spam
+from app.gmail.job_filter import is_spam, is_job_email
 from app.models.applications import JobApplication
 
 router=APIRouter(tags=["Sync"])
@@ -71,6 +71,9 @@ async def gmail_sync(user_id: str, db: AsyncSession = Depends(get_db)):
         body = extract_email_body(full["payload"])
         if is_spam(subject):
             continue
+        if not is_job_email(subject):
+            continue
+        print(f"Body length: {len(body)} | Preview: {body[:80]}")
         clean_body = clean_email(body)
         predicted_label, confidence = predict_email(subject + " " + clean_body)
         print(f"Subject: {subject[:50]} | Label: {predicted_label} | Confidence: {confidence:.2f}")

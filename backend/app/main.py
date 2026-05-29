@@ -16,7 +16,7 @@ from app.api.routes.gmail_auth_route import router as gmail_auth_router
 from app.api.routes.gmail_sync_route import router as sync_router
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    print(f"=======🚀 Starting {settings.APP_NAME}...======")
+    print(f"======= Starting {settings.APP_NAME}...======")
     await init_db()
     yield
     print("=======👋 Shutting down...========")

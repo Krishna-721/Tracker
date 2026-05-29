@@ -19,7 +19,7 @@ async def process_application(payload: EmailInput, db: AsyncSession=Depends(get_
 
     predicted_label,confidence=predict_email(payload.subject + " "+ clean_body)
     new_application= JobApplication(
-        company=None, role=None,status=predicted_label, notes=payload.body,source=payload.sender, subject=payload.subject)
+        user_id="test@example.com",company=None, role=None,status=predicted_label, notes=payload.body,source=payload.sender, subject=payload.subject)
     db.add(new_application)
     await db.commit()
     await db.refresh(new_application)

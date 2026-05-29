@@ -17,6 +17,7 @@ async def test_root():
 async def test_create_application():
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
      response=await ac.post("/applications/",json={
+        "user_id": "test@example.com",
         "company": "Google",
         "role": "Data Scientist",
         "status": "applied",
@@ -36,6 +37,7 @@ async def test_get_application_by_id():
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
         # create first
         create = await ac.post("/applications/", json={
+            "user_id": "test@example.com",
             "company": "Google",
             "role": "Data Scientist",
             "status": "applied",
@@ -52,6 +54,7 @@ async def test_get_application_by_id():
 async def test_update_application():
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
         create = await ac.post("/applications/", json={
+            "user_id": "test@example.com",
             "company": "Google",
             "role": "Data Scientist",
             "status": "applied",
@@ -60,6 +63,7 @@ async def test_update_application():
         })
         app_id = create.json()["id"]
         response = await ac.put(f"/applications/{app_id}", json={
+            "user_id": "test@example.com",
             "company": "Google",
             "role": "Data Scientist",
             "status": "interview_scheduled"
@@ -71,6 +75,7 @@ async def test_update_application():
 async def test_delete_application():
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
         create = await ac.post("/applications/", json={
+            "user_id": "test@example.com", 
             "company": "Google",
             "role": "Data Scientist",
             "status": "applied",

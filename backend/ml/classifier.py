@@ -1,7 +1,6 @@
 import joblib
 import os
 
-
 BASE_DIR = os.path.dirname(__file__)
 # python way of storing the trained data and loading it back into RAM when app restarts
 # usually training data is lost when app closes so like RAM restarts again so to prevent it we use model.pkl

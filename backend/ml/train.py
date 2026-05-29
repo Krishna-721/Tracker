@@ -18,6 +18,7 @@ DATA_PATH = os.path.join(BASE_DIR, "training_data.csv")
 MODEL_PATH = os.path.join(BASE_DIR, "model.pkl")  
 
 df=pd.read_csv(DATA_PATH)
+df = df.dropna(subset=["text", "label"])
 print(df.head())
 
 # loading the model

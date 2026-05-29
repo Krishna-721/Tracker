@@ -6,8 +6,8 @@ __pycache__/
 .Python
 
 # Virtual Environments
-.tracker-env/
-tracker-env/
+venv/
+venv/
 env/
 ENV/
 env.bak/
