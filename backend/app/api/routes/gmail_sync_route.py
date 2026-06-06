@@ -77,7 +77,7 @@ async def gmail_sync(user_id: str, db: AsyncSession = Depends(get_db)):
         clean_body = clean_email(body)
         predicted_label, confidence = predict_email(subject + " " + clean_body)
         print(f"Subject: {subject[:50]} | Label: {predicted_label} | Confidence: {confidence:.2f}")
-        if confidence < 0.5:
+        if confidence < 0.35:
             continue
         existing=await db.execute(select(JobApplication).where(JobApplication.gmail_message_id==message["id"]))
         if existing.scalar_one_or_none() is not None:
