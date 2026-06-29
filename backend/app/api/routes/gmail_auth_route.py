@@ -6,6 +6,7 @@ from fastapi.responses import RedirectResponse
 from google_auth_oauthlib.flow import Flow
 from sqlalchemy.ext.asyncio import AsyncSession
 import json
+from sqlalchemy import select
 
 from app.db.postgres import get_db
 from app.core.config import settings
@@ -60,16 +61,35 @@ async def gmail_callback(request: Request, db: AsyncSession = Depends(get_db)):
         credentials.id_token, grequests.Request(), settings.GOOGLE_CLIENT_ID, clock_skew_in_seconds=10)
     user_email = id_info["email"]
 
-    token = GmailToken(
-        user_id=user_email,
-        token=credentials.token,
-        refresh_token=credentials.refresh_token,
-        token_uri=credentials.token_uri,
-        client_id=credentials.client_id,
-        client_secret=credentials.client_secret,
-        scopes=json.dumps(list(credentials.scopes)),
-    )
-    db.add(token)
+    # Check if user_id already exists it updates, else inserts
+    existing = await db.execute(
+        select(GmailToken).where(GmailToken.user_id == user_email))
+
+    gmail_token = existing.scalar_one_or_none()
+
+    if gmail_token:
+        gmail_token.token = credentials.token
+
+        if credentials.refresh_token:
+            gmail_token.refresh_token = credentials.refresh_token
+
+        gmail_token.token_uri = credentials.token_uri
+        gmail_token.client_id = credentials.client_id
+        gmail_token.client_secret = credentials.client_secret
+        gmail_token.scopes = json.dumps(list(credentials.scopes))
+
+    else:
+        gmail_token = GmailToken(
+            user_id=user_email,
+            token=credentials.token,
+            refresh_token=credentials.refresh_token,
+            token_uri=credentials.token_uri,
+            client_id=credentials.client_id,
+            client_secret=credentials.client_secret,
+            scopes=json.dumps(list(credentials.scopes)),
+        )
+        db.add(gmail_token)
+
     await db.commit()
 
     return {"status": "gmail_connected"}
