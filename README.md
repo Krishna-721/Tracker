@@ -1,78 +1,74 @@
 # Tracker
 
-## What It Does
-Reduces the hassle of filtering job-related emails from your inbox.
-Connects to Gmail, pulls your job emails, classifies them using ML,
-and gives you a unified platform to track every application —
-interviews, rejections, offers, and confirmations — in one place.
+## Current Progre&#x20;d)
 
-## The Problem It Solves
-The previous version (Apply-Log) used keyword rules to classify emails.
-Words like "congratulations" or "opportunity" appeared in both real job
-emails and spam — so the system constantly misclassified them.
+Tracker has been refactored from a monolithic email processor into a layered backend architecture focused on scalability and maintainability.
 
-This version replaces keyword rules with a TF-IDF + Logistic Regression
-classifier that reads full email context, not just word presence.
+### ✅ Completed
 
-## Tech Stack
-- **Backend** — Python, FastAPI, PostgreSQL (async SQLAlchemy)
-- **ML** — TF-IDF + Logistic Regression (scikit-learn)
-- **Testing** — pytest, httpx, NullPool isolation
-- **Planned** — Docker, AWS EC2
+#### Architecture
 
-## Status
-- [x] FastAPI backend initialized
-- [x] PostgreSQL connected — async engine, Base, session management
-- [x] Database models and schemas defined
-- [x] Full CRUD — POST, GET, PUT, DELETE /applications
-- [x] Email ingestion endpoint — POST /emails/process
-- [x] Analytics endpoint — GET /analytics/summary
-- [x] ML classifier — TF-IDF + Logistic Regression trained and wired in
-- [x] Pagination and status filtering on GET /applications/
-- [x] Confidence score on ML predictions
-- [x] Gmail OAuth 2.0 — connect your inbox via /auth/gmail/login
-- [x] Gmail sync — pull and classify emails via /gmail/sync
-- [x] Spam filter — job alerts and newsletters filtered before classification
-- [x] 8/8 tests passing with isolated test database
+- Layered backend architecture
+- Separation of concerns using Services, Repositories, Matchers, and Pipeline
+- Business logic removed from API routes
 
-## WIP
-- [ ] Expand training data — model currently at 44 samples, needs 150-200
-- [ ] NER — extract company and role from email body
-- [ ] Docker setup
-- [ ] AWS deployment
+#### Gmail Integration
 
-## Current Trade-offs
-The ML model is trained on 44 samples - a mix of real and synthetic
-labeled job emails. This is enough to demonstrate the pipeline but
-not production-ready. Known limitations:
+- Gmail OAuth 2.0
+- Automatic token refresh
+- Paginated email synchronization
+- Duplicate email prevention
+- Robust error handling
 
-- Emails contain HTML tags, reply chains, signatures, and boilerplate
-  footers that add noise to the classifier
-- company and role fields are not yet extracted — NER planned
-- Metrics are based on a small test set and are not statistically reliable
+#### Email Processing Pipeline
 
-## How It Will Improve
-Every email synced via Gmail becomes new training data.
-As labeled emails accumulate the model will be retrained automatically.
-Target upgrade path: TF-IDF → fine-tuned DistilBERT at 500+ samples.
+- HTML email parsing
+- Spam filtering
+- Job alert filtering
+- Rule-based classification
+- ML fallback (TF-IDF + Logistic Regression)
+- Decision engine for confidence handling
 
-## Setup
-```bash
-git clone https://github.com/Krishna-721/tracker.git
-cd tracker/backend
-pip install -r requirements.txt
-cp .env.example .env   # fill in your PostgreSQL URL and Google OAuth credentials
-python ml/train.py     # train the model
-uvicorn app.main:app --reload
-```
+#### Application Layer
 
-Visit `http://localhost:8000/docs` for the full API.
+- Application Repository
+- Application Matcher (Thread ID based)
+- Application Service
+- PipelineResult abstraction
 
-### Connect Gmail
-1. Visit `http://localhost:8000/auth/gmail/login`
-2. Authenticate with your Google account
-3. Sync your inbox via `GET /gmail/sync?user_id=your@email.com`
+#### Database
+
+- PostgreSQL with Async SQLAlchemy
+- Application persistence
+- Confidence tracking
+- Classification method tracking
+- Review flag support
 
 ---
 
-> Gmail OAuth is live. Connect via GET /auth/gmail/login then sync via GET /gmail/sync?user_id=your@email.com
+## Current Pipeline
+
+```mermaid
+flowchart TD
+    Gmail --> EmailParser --> SpamFilter --> JobAlertFilter --> RuleClassifier --> MLClassifier --> DecisionEngine --> ApplicationService --> ApplicationRepository --> PostgreSQL
+```
+
+---
+
+## Current Limitations
+
+- Company extraction not implemented
+- Role extraction not implemented
+- Application timeline not implemented
+- Existing applications matched only by Gmail Thread ID
+- Classification accuracy depends ality and extracted text
+
+---
+
+## Next Milestone (Sprint 3)
+
+- Improve HTML/Text extraction
+- Email type detection
+- Company & role extraction
+- Smarter application matching
+- Timeline-based application tracking

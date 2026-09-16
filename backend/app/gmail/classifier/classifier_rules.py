@@ -57,7 +57,7 @@ RULES= {
     ],
     }
     
-def classify(subject: str, body: str):
+def rule_classify(subject: str, body: str):
     text = f"{subject} {body}".lower()
 
     for status, phrases in RULES.items():

@@ -8,7 +8,6 @@ import logging
 from app.db.postgres import get_db
 from app.core.config import settings
 from app.models.gmail_token import GmailToken
-from app.models.applications import JobApplication
 
 from google.oauth2.credentials import Credentials
 from google.auth.transport.requests import Request
@@ -16,12 +15,13 @@ from google.auth.exceptions import RefreshError
 from googleapiclient.discovery import build
 
 from app.gmail.body_parser import extract_email_body
-from app.gmail.filters.job_filter import is_spam, is_job_email
 
-from ml.classifier import predict_email
-from ml.preprocessor import clean_email
+from app.gmail.pipeline import EmailPipeline
+from app.gmail.pipeline_result import PipelineResult
 
-from app.gmail.classifier.classifier_rules import classify_email 
+from app.repositories.application_repository import ApplicationRepository
+from app.matcher.application_matcher import ApplicationMatcher
+from app.services.application_service import ApplicationService
 
 logger = logging.getLogger(__name__)
 
@@ -34,7 +34,7 @@ async def gmail_sync(user_id: str, db: AsyncSession = Depends(get_db)):
     # Statistics
     processed = 0
     saved = 0
-    duplicates = 0
+    # duplicates = 0
     spam = 0
     not_job = 0
     low_confidence = 0
@@ -79,9 +79,16 @@ async def gmail_sync(user_id: str, db: AsyncSession = Depends(get_db)):
 
     service = build("gmail", "v1", credentials=creds)
 
+    repository=ApplicationRepository(db)
+    matcher=ApplicationMatcher(db)
+    
+    application_service=ApplicationService(repository, matcher)
+
+    pipeline=EmailPipeline()
+
     messages = []
     page_token = None
-    MAX_EMAILS=500
+    MAX_EMAILS=150
 
     while True:
         response = service.users().messages().list(
@@ -125,74 +132,46 @@ async def gmail_sync(user_id: str, db: AsyncSession = Depends(get_db)):
 
             body = extract_email_body(full["payload"])
 
-            if is_spam(subject):
-                spam += 1
-                continue
-
-            # if not is_job_email(subject):
-            #     not_job += 1
-            #     continue
-
-            logger.debug(f"Body Length={len(body)} | Preview={body[:80]}")
-
-            rule_prediction = classify_email(subject, body)
-
-            if rule_prediction:
-
-                predicted_label = rule_prediction
-                confidence = 1.0
-                classification_method = "RULE"
-
-                logger.info(f"RULE → {predicted_label}")
-            else:
-                clean_body = clean_email(body)
-                predicted_label, confidence = predict_email(subject + " " + clean_body)
-
-                classification_method = "ML"
-                logger.info(f"ML → {predicted_label} " f"({confidence:.2f})")
-
-            logger.info(
-                f"Prediction={predicted_label} | "
-                f"Confidence={confidence:.2f} | "
-                f"Subject={subject[:60]}"
-            )
-
-            if confidence < 0.35:
-                low_confidence += 1
-                continue
-
-            existing = await db.execute(
-                select(JobApplication).where(
-                    JobApplication.gmail_message_id == message["id"]))
-
-            if existing.scalar_one_or_none():
-                duplicates += 1
-                continue
-
-            application = JobApplication(
-                user_id=user_id,
-                status=predicted_label,
-                source=sender,
+            result = PipelineResult(
                 subject=subject,
-                notes=body,
+                body=body,
+                sender=sender,
                 gmail_message_id=message["id"],
                 gmail_thread_id=full["threadId"],
             )
-            db.add(application)
-            saved += 1
+
+            result = pipeline.process(result)
+
+            if result.ignore:
+
+                if result.ignore_reason == "Spam":
+                    spam += 1
+
+                elif result.ignore_reason == "Job Alert":
+                    not_job += 1
+
+                elif result.ignore_reason == "Low Confidence":
+                    low_confidence += 1
+
+                continue
+
+            application = await application_service.process(
+                user_id=user_id,
+                result=result,
+            )
+
+            if application:
+                saved += 1
 
         except Exception:
             errors += 1
             logger.exception(f"Failed processing email {message['id']}")
 
-    # Commit once after processing all emails
-    await db.commit()
-
     return {
         "status": "sync_complete",
         "processed": processed,
         "saved": saved,
-        "duplicates": duplicates,
+        # "duplicates": duplicates,
         "spam": spam,
         "not_job": not_job,
         "low_confidence": low_confidence,

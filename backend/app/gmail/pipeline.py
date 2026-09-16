@@ -3,8 +3,8 @@ from app.gmail.pipeline_result import PipelineResult
 from app.gmail.filters.spam_filter import is_spam
 from app.gmail.filters.job_alert_filter import is_job_alert
 
-from app.gmail.classifier.classifier_rules import classify as rule_classify
-from app.gmail.classifier.ml_classifier import classify as ml_classify
+from app.gmail.classifier.classifier_rules import rule_classify
+from app.gmail.classifier.ml_classifier import ml_classify
 
 from app.gmail.decision_engine import decide
 
