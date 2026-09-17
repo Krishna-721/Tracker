@@ -1,67 +1,64 @@
-
-RULES= {
-        "rejection_signals" : [
+RULES = {
+    "rejected": [
+        "we regret to inform",
+        "unfortunately",
         "not moving forward",
-        "decided to move forward with other",
-        "unable to proceed with your application",
-        "regret to inform",
-        "will not be extending an offer",
-        "not been successful",
+        "not selected",
+        "application was not selected",
         "decided not to proceed",
-        "unfortunately we have taken the decision",
-        "progress with other candidates",
-        "not proceeding with your candidacy",
-        "unable to offer you",
-        "won't be moving forward",
-        "we will not be proceeding",
-        "decided to move in a different direction",
+        "will not be moving forward",
+        "position has been filled",
+        "other candidates",
     ],
-    
-    "offer_signals" : [
+    "offer": [
         "offer letter",
-        "pleased to offer you",
-        "we are extending an offer",
-        "stipend will be",
-        "confirm your acceptance",
-        "sign and return",
-        "joining date",
+        "job offer",
+        "pleased to offer",
+        "offer of employment",
         "we are delighted to offer",
-        "formally offer you",
-        "excited to offer you",
+        "congratulations",
+        "welcome to the team",
     ],
-    
-    "interview_signals" : [
-        "schedule a",
-        "invite you for a",
+    "interview": [
+        "interview",
+        "schedule an interview",
+        "interview invitation",
+        "interview round",
         "technical interview",
-        "coding round",
-        "share your availability",
-        "book a slot",
-        "hackerrank",
-        "complete the assessment",
-        "shortlisted for",
-        "move you to the next stage",
-        "pair programming session",
-        "please complete this coding",
+        "coding interview",
+        "phone screen",
+        "screening call",
+        "next round",
     ],
-    
-    "other_signals" : [
-        "received your application",
+    "applied": [
+        "application received",
+        "application has been received",
         "thank you for applying",
+        "thanks for applying",
+        "application confirmation",
+        "we received your application",
         "successfully submitted",
-        "will be in touch",
-        "our team will review",
-        "application is being evaluated",
-        "application has been submitted",
-        "we have received your",
     ],
-    }
-    
-def rule_classify(subject: str, body: str):
-    text = f"{subject} {body}".lower()
+}
+
+
+def classify(subject: str, body: str) -> str | None:
+    """
+    Classify an email using deterministic rule-based signals.
+
+    Returns one of:
+        rejected
+        offer
+        interview
+        applied
+
+    Returns None when no rule matches.
+    """
+
+    text = f"{subject or ''} {body or ''}".lower()
 
     for status, phrases in RULES.items():
-        if any(p in text for p in phrases):
+        if any(phrase in text for phrase in phrases):
             return status
 
     return None

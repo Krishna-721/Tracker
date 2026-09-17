@@ -1,9 +1,10 @@
+from app.api.routes import emails_route
 from app.gmail.pipeline_result import PipelineResult
 
 from app.gmail.filters.spam_filter import is_spam
 from app.gmail.filters.job_alert_filter import is_job_alert
 
-from app.gmail.classifier.classifier_rules import rule_classify
+from app.gmail.classifier.classifier_rules import classify
 from app.gmail.classifier.ml_classifier import ml_classify
 
 from app.gmail.decision_engine import decide
@@ -15,7 +16,7 @@ class EmailPipeline:
         self.spam_filter = is_spam
         self.job_alert_filter = is_job_alert
 
-        self.rule_classifier = rule_classify
+        self.rule_classifier = classify
         self.ml_classifier = ml_classify
 
         self.decision_engine = decide
@@ -47,6 +48,12 @@ class EmailPipeline:
             status, confidence = self.ml_classifier(
                 email.subject,
                 email.body,
+            )
+            print(
+                f"[ML] "
+                f"subject={email.subject!r} | "
+                f"status={status!r} | "
+                f"confidence={confidence:.3f}"
             )
 
             email.status = status

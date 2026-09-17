@@ -22,7 +22,7 @@ from app.gmail.pipeline_result import PipelineResult
 from app.matcher.application_matcher import ApplicationMatcher
 from app.repositories.application_repository import ApplicationRepository
 from app.models.applications import JobApplication
-
+from app.gmail.status_ranks import should_update_status
 
 class ApplicationService:
 
@@ -36,7 +36,13 @@ class ApplicationService:
         if result.ignore:
             return None
 
-        # Find existing application
+        # Check whether this exact Gmail message has already been processed.
+        existing_message = await self.repository.find_by_message_id(result.gmail_message_id)
+
+        if existing_message:
+            return existing_message
+
+        # Find an existing application for this Gmail thread.
         existing = await self.matcher.find_existing(
             user_id=user_id,
             gmail_thread_id=result.gmail_thread_id,
@@ -47,18 +53,22 @@ class ApplicationService:
         # -------------------------
         if existing:
 
-            await self.repository.update(
-                existing,
-                status=result.status,
-                confidence=result.confidence,
-                classification_method=result.classification_method,
-                needs_review=result.needs_review,
-                subject=result.subject,
-                notes=result.body,
-                source=result.sender,
-                gmail_message_id=result.gmail_message_id,
-                gmail_thread_id=result.gmail_thread_id,
-            )
+            update_data = {
+                "confidence": result.confidence,
+                "classification_method": result.classification_method,
+                "needs_review": result.needs_review,
+                "subject": result.subject,
+                "notes": result.body,
+                "source": result.sender,
+                "gmail_message_id": result.gmail_message_id,
+                "gmail_thread_id": result.gmail_thread_id,
+            }
+
+            # Only move the application status forward.
+            if should_update_status(existing.status, result.status):
+                update_data["status"] = result.status
+
+            await self.repository.update(existing, **update_data)
 
             await self.repository.commit()
 
