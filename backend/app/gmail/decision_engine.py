@@ -1,3 +1,4 @@
+from app.api.routes import emails_route
 from app.gmail.pipeline_result import PipelineResult
 
 HIGH_CONFIDENCE = 0.80
@@ -32,22 +33,26 @@ def decide(email: PipelineResult) -> PipelineResult:
     # ML Predictions
     # ----------------------------------
     if email.classification_method == "ML":
+        if email.classification_method == "ML":
 
-        confidence = email.confidence or 0.0
+            # "other" means this is not a job application email
+            if email.status == "other":
+                email.ignore = True
+                email.ignore_reason = "Not a job application"
+                return email
 
-        if confidence >= HIGH_CONFIDENCE:
+            confidence = email.confidence or 0.0
 
-            email.ignore = False
-            email.needs_review = False
+            if confidence >= HIGH_CONFIDENCE:
+                email.ignore = False
+                email.needs_review = False
 
-        elif confidence >= MEDIUM_CONFIDENCE:
+            elif confidence >= MEDIUM_CONFIDENCE:
+                email.ignore = False
+                email.needs_review = True
 
-            email.ignore = False
-            email.needs_review = True
-
-        else:
-
-            email.ignore = True
-            email.ignore_reason = "Low Confidence"
+            else:
+                email.ignore = True
+                email.ignore_reason = "Low Confidence"
 
     return email

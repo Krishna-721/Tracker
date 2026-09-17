@@ -17,9 +17,15 @@ DATA_PATH = os.path.join(BASE_DIR, "training_data.csv")
 # usually training data is lost when app closes so like RAM restarts again so to prevent it we use model.pkl
 MODEL_PATH = os.path.join(BASE_DIR, "model.pkl")  
 
-df=pd.read_csv(DATA_PATH)
+df = pd.read_csv(DATA_PATH)
+# Remove rows with missing text or label
 df = df.dropna(subset=["text", "label"])
-print(df.head())
+# Remove accidental header/malformed rows
+df = df[df["label"] != "label"]
+
+print("Dataset size:", len(df))
+print("\nLabel distribution:")
+print(df["label"].value_counts())
 
 # loading the model
 X =df["text"]

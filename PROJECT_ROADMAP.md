@@ -1,355 +1,463 @@
-# Tracker v2.0
-
-## Overview
-
-**Tracker** is an email intelligence platform that automatically organizes job applications from Gmail. It combines rule‑based processing with machine‑learning classification to provide a scalable, production‑ready solution.
-
----
-
-## Table of Contents
-
-- [Vision](#vision)
-- [Roadmap](#roadmap)
-  - [Sprint 0 – Architecture Planning](#sprint-0---architecture-planning)
-  - [Sprint 1 – Email Processing Pipeline](#sprint-1---email-processing-pipeline)
-  - [Sprint 2 – Gmail Infrastructure](#sprint-2---gmail-infrastructure)
-  - [Sprint 3 – Database Redesign](#sprint-3---database-redesign)
-  - [Sprint 4 – Service Layer](#sprint-4---service-layer)
-  - [Sprint 5 – Repository Pattern](#sprint-5---repository-pattern)
-  - [Sprint 6 – Background Processing](#sprint-6---background-processing)
-  - [Sprint 7 – Review Queue (Human‑in‑the‑Loop)](#sprint-7---review-queue-human-in-the-loop)
-  - [Sprint 8 – ML Improvements](#sprint-8---ml-improvements)
-  - [Sprint 9 – Analytics Engine](#sprint-9---analytics-engine)
-  - [Sprint 10 – Production Readiness](#sprint-10---production-readiness)
-  - [Sprint 11 – Frontend Integration](#sprint-11---frontend-integration)
-  - [Sprint 12 – Deployment](#sprint-12---deployment)
-- [Stretch Goals](#stretch-goals)
-- [Estimated Timeline](#estimated-timeline)
-
----
+# Tracker v2.0 Roadmap
 
 ## Vision
 
-Build a production‑ready platform that automatically extracts, classifies, and tracks job‑application emails from Gmail, leveraging a hybrid **rules + ML** pipeline, robust background processing, and a clean analytics dashboard.
+Build **Tracker** into a production‑ready Job Application Tracking Platform that automatically syncs Gmail, intelligently processes emails, tracks the full application lifecycle, and provides actionable insights through analytics.
 
 ---
 
-## Roadmap
+## Current Progress
 
-### Sprint 0 — Architecture Planning
+**Current Version:** v2.0
 
-**Duration:** 1 day
+### Completed Features
 
-- Define overall backend architecture
-- Define email processing pipeline
-- Design classification workflow
-- Design database architecture
-- Design service & repository layers
-- Draw system architecture diagram
-- Document all architectural decisions
+- Gmail OAuth 2.0 Authentication
+- Gmail Token Refresh
+- Gmail Pagination
+- Layered Backend Architecture
+- Email Processing Pipeline
+- Spam Filter
+- Job Alert Filter
+- Rule‑based Classification
+- ML Fallback (TF‑IDF + Logistic Regression)
+- Decision Engine
+- Application Repository
+- Application Service
+- Application Matcher (Thread‑based)
+- Async PostgreSQL
+- Confidence Tracking
+- Review Flag Support
 
 ---
 
-### Sprint 1 — Email Processing Pipeline
+### Sprint 1 – Backend Architecture ✅
 
-**Duration:** 3–4 days
+**Status:** Completed
 
-#### Target Architecture
+**Architecture**
+
+- Layered Architecture
+- Email Pipeline
+- Pipeline Result Object
+- Decision Engine
+- Service Layer
+- Repository Pattern
+- Application Matcher
+- Gmail Sync Refactor
+
+**Pipeline Diagram**
 
 ```javascript
-Gmail → Email Parser → Spam Filter → Job Alert Filter → Rule Engine → ML Classifier → Decision Engine → Database
+flowchart TD
+    Gmail --> EmailParser --> SpamFilter --> JobAlertFilter --> RuleEngine --> MLClassifier --> DecisionEngine --> ApplicationService --> ApplicationRepository --> PostgreSQL
 ```
 
-#### Tasks
+---
 
-- **Pipeline**
-  - Create `pipeline.py`
-  - Create `PipelineResult`
-  - Remove business logic from routes
-- **Filters**
-  - Spam Filter
-  - Job Alert Filter
-  - Company Newsletter Filter
-  - Duplicate Email Filter
-- **Rule Engine**
-  - Rejection Rules
-  - Offer Rules
-  - Interview Rules
-  - Assessment Rules
-  - Application Confirmation Rules
-- **ML Layer**
-  - ML as fallback only
-  - Confidence calibration
-  - Threshold tuning
-  - Prediction metadata
-- **Decision Engine**
-  - SAVE
-  - IGNORE
-  - NEEDS\_REVIEW
-  - UPDATE\_EXISTING
+### Sprint 2 – Email Intelligence 🚧
+
+**Status:** In Progress
+
+**Focus:** Improve email understanding before storage.
+
+#### 1. Email Parsing
+
+- Improve HTML extraction
+- Remove CSS, signatures, tracking pixels, unsubscribe sections
+- Better plain‑text generation
+
+#### 2. Email Type Detection
+
+Detect whether an email is:
+
+- Application
+- Job Alert
+- Newsletter
+- Marketing
+- Social
+- Unknown
+
+Only application‑related emails continue through the pipeline.
+
+#### 3. Entity Extraction
+
+**Company**: Stripe, Google, Amazon, Microsoft
+**Role**: Software Engineer, Data Scientist, ML Engineer, Intern
+**Recruiter**: John Doe
+**Location**: Remote, Hyderabad, Bangalore
+
+#### 4. Rule Engine Improvements
+
+Expand rule coverage for stages such as:
+
+- Application Received, Assessment, OA, Technical Round, HR Round, Interview, Offer, Rejection, Waitlist, Withdrawal
+
+#### 5. Application Matching v2
+
+- **Current**: Thread ID only
+- **Future**: Multi‑field matching (Company, Role, Sender, Similarity Score)
 
 ---
 
-### Sprint 2 — Gmail Infrastructure
+### Sprint 3 – Application Lifecycle Tracking
 
-**Duration:** 3 days
+**Core differentiator:** Full application timeline.
 
-- **OAuth**
-  - Refresh tokens
-  - Handle expired tokens
-  - Multi‑account support
-  - Retry failed authentication
-- **Sync**
-  - Pagination
-  - Incremental sync
-  - Sync only new emails
-  - Resume interrupted sync
-  - Retry failed emails
-- **Performance**
-  - Batch Gmail API calls
-  - Batch database writes
-  - Sync progress tracking
-  - Sync statistics
+**Timeline Diagram**
 
----
+```javascript
+flowchart TD
+    Applied --> Assessment --> Interview --> Offer --> Accepted
+```
 
-### Sprint 3 — Database Redesign
+**Alternative outcome**
 
-**Duration:** 2–3 days
+```javascript
+flowchart TD
+    Applied --> Rejected
+```
 
-- **Tables**
-  - `email_messages`
-  - `job_applications`
-  - `gmail_tokens`
-  - `sync_history`
-- **Metadata**
-  - confidence
-  - classification\_method
-  - pipeline\_stage
-  - processing\_time
-  - processed\_at
-- **Relationships**
-  - Email → Application
-  - Thread tracking
-  - Status history
+**New Tables**
+
+- `application_events` – stores every status transition
+- `email_messages` – stores raw processed emails
+- `sync_history` – tracks each Gmail sync
+
+**Features**
+
+- Timeline view
+- Status history
+- Last updated timestamp
+- Duplicate detection
+- Merge applications
+- Event tracking
 
 ---
 
-### Sprint 4 — Service Layer
+### Sprint 4 – Background Processing
 
-**Duration:** 2 days
+**Goal:** Move synchronization to background jobs.
 
-- **Create Services**
-  - GmailService
-  - SyncService
-  - AnalyticsService
-  - ApplicationService
-- **Refactor**
-  - Gmail logic
-  - CRUD logic
-  - Analytics logic
-  - Email processing logic
+**Features**
 
----
+- Incremental sync
+- Background worker
+- Retry failed emails
+- Progress API
+- Cancel sync
+- Sync history
 
-### Sprint 5 — Repository Pattern
-
-**Duration:** 2 days
-
-- **Repositories**
-  - ApplicationRepository
-  - GmailRepository
-  - TokenRepository
-- **Methods**
-  - `save_application()`
-  - `update_application()`
-  - `find_by_message_id()`
-  - `find_by_thread()`
-  - `delete_application()`
-  - `statistics()`
+**Future Job Runners**: APScheduler, Celery, Redis Queue
 
 ---
 
-### Sprint 6 — Background Processing
+### Sprint 5 – Human Review Queue
 
-**Duration:** 4 days
+Create a feedback loop for model predictions.
 
-- **Tasks**
-  - Background worker
-  - Job queue
-  - Progress API
-  - Cancel sync
-  - Retry failed jobs
-- **Future Options**
-  - APScheduler
-  - Celery
-  - Redis Queue
+**Review Dashboard**
+
+- Needs review
+- Approve prediction
+- Correct prediction
+- Manual status change
+
+Corrections become future training data.
 
 ---
 
-### Sprint 7 — Review Queue (Human‑in‑the‑Loop)
+### Sprint 6 – ML Improvements
 
-**Duration:** 3 days
+Replace synthetic bias with real‑world learning.
 
-- **Tasks**
-  - Needs‑review endpoint
-  - Review UI
-  - Accept prediction
-  - Correct prediction
-  - Store corrections
-  - Auto‑generate training dataset
+**Dataset**
 
----
+- Collect real emails
+- Human‑reviewed labels
+- Remove synthetic bias
 
-### Sprint 8 — ML Improvements
+**Features**
 
-**Duration:** 4–5 days
+- Subject weighting
+- Sender weighting
+- Better preprocessing
+- HTML cleanup
+- Signature removal
 
-- **Dataset**
-  - Collect real emails
-  - Build review dataset
-  - Reduce synthetic bias
-- **Features**
-  - Subject weighting
-  - Sender weighting
-  - HTML cleanup
-  - Signature removal
-- **Model**
-  - Retrain logistic regression
-  - Cross‑validation
-  - Probability calibration
-  - Threshold optimization
-- **Metrics**
-  - Precision
-  - Recall
-  - F1 score
-  - Confusion matrix
+**Model Enhancements**
+
+- Retrain Logistic Regression
+- Cross‑validation
+- Threshold optimization
+- Probability calibration
+- Evaluate need for transformer models
 
 ---
 
-### Sprint 9 — Analytics Engine
+### Sprint 7 – Analytics Engine
 
-**Duration:** 2 days
+Provide insights into job search progress.
 
-- **Dashboard**
-  - Daily applications
-  - Weekly applications
-  - Interview rate
-  - Rejection rate
-  - Offer rate
-  - Company statistics
+**Dashboard Metrics**
 
----
-
-### Sprint 10 — Production Readiness
-
-**Duration:** 5 days
-
-- **Security**
-  - Secrets management
-  - Rate limiting
-  - Input validation
-  - OAuth hardening
-- **Database**
-  - Alembic migrations
-  - Index optimization
-  - Connection pooling
-- **Docker**
-  - Backend container
-  - PostgreSQL container
-  - Docker Compose
-- **Logging**
-  - Structured logging
-  - Request IDs
-  - Error tracking
-  - Pipeline logs
-- **Monitoring**
-  - Health endpoint
-  - Metrics endpoint
-  - Sync monitoring
+- Total applications
+- Active applications
+- Interview rate
+- Offer rate
+- Rejection rate
+- Company statistics
+- Monthly & weekly trends
+- Response time
 
 ---
 
-### Sprint 11 — Frontend Integration
+### Sprint 8 – Production Readiness
 
-**Duration:** 4 days
+Prepare backend for production deployment.
 
-- **Dashboard UI**
-  - Login
-  - Gmail connect
-  - Sync progress
-  - Applications view
-  - Search & filters
-  - Review queue
-  - Analytics view
+**Security**
 
----
+- Secrets management
+- OAuth hardening
+- Input validation
+- Rate limiting
 
-### Sprint 12 — Deployment
+**Database**
 
-**Duration:** 3 days
+- Alembic migrations
+- Index optimization
+- Connection pooling
 
-- Environment configuration
-- Production database setup
-- Docker deployment
-- AWS EC2 provisioning
-- Nginx reverse proxy
-- HTTPS & domain setup
-- CI/CD pipeline
+**Docker**
 
----
+- Backend container
+- PostgreSQL container
+- Docker Compose setup
 
-## 🚀 Stretch Goals (v2)
+**Logging**
 
-- Outlook integration
-- Yahoo Mail integration
-- Generic IMAP support
-- Resume parsing
-- Company enrichment
-- Salary extraction
-- AI‑generated email summaries
-- Interview timeline view
-- Calendar integration
-- Browser extension
-- Mobile application
-- Multi‑user SaaS
-- Team workspaces
-- Notifications system
-- LLM‑powered classification
+- Structured logs
+- Request IDs
+- Pipeline logs
+- Error tracking
+
+**Monitoring**
+
+- Health endpoint
+- Metrics endpoint
+- Sync monitoring
 
 ---
 
-## 📅 Estimated Timeline
+### Sprint 9 – Frontend Integration
 
-| Sprint    | Focus                 | Duration |
-| --------- | --------------------- | -------- |
-| Sprint 0  | Architecture Planning | 1 day    |
-| Sprint 1  | Email Pipeline        | 3–4 days |
-| Sprint 2  | Gmail Infrastructure  | 3 days   |
-| Sprint 3  | Database Redesign     | 2–3 days |
-| Sprint 4  | Service Layer         | 2 days   |
-| Sprint 5  | Repository Pattern    | 2 days   |
-| Sprint 6  | Background Processing | 4 days   |
-| Sprint 7  | Review Queue          | 3 days   |
-| Sprint 8  | ML Improvements       | 4–5 days |
-| Sprint 9  | Analytics Engine      | 2 days   |
-| Sprint 10 | Production Readiness  | 5 days   |
-| Sprint 11 | Frontend Integration  | 4 days   |
-| Sprint 12 | Deployment            | 3 days   |
+Build the complete Tracker UI.
+
+**Dashboard UI Components**
+
+- Gmail Connect
+- Sync Progress
+- Applications list
+- Timeline view
+- Search & filters
+- Analytics charts
+- Review Queue interface
 
 ---
 
-## 🎯 Final Deliverable
+### Sprint 10 – Deployment
 
-A production‑ready Email Intelligence Platform featuring:
+Deploy Tracker to production environments.
 
-- Hybrid **rules + ML** classification
-- Robust Gmail synchronization
-- Incremental email processing
-- Human‑in‑the‑loop learning
-- Modular pipeline architecture
-- Repository & Service pattern
-- Background job processing
-- Analytics dashboard
-- Production‑ready deployment
-- Scalable architecture for future integrations
+**Steps**
+
+- Set up CI/CD pipeline
+- Configure cloud infrastructure (e.g., Azure/AWS)
+- Enable autoscaling and load balancing
+- Perform end‑to‑end smoke tests
+- Monitor rollout and rollback if needed
+
+---
+
+### Sprint 8 – Production Readiness
+
+Prepare backend for production.
+
+#### Security
+
+- Secrets management
+- OAuth hardening
+- Input validation
+- Rate limiting
+
+#### Database
+
+- Alembic migrations
+- Index optimization
+- Connection pooling
+
+#### Docker
+
+- Backend container
+- PostgreSQL container
+- Docker Compose setup
+
+#### Logging
+
+- Structured logs
+- Request IDs
+- Pipeline logs
+- Error tracking
+
+#### Monitoring
+
+- Health endpoint
+- Metrics endpoint
+- Sync monitoring
+
+### Sprint 9 – Frontend Integration
+
+Build the complete Tracker UI.
+
+### Dashboard
+
+\- Gmail Connect
+
+\- Sync Progress
+
+\- Applications
+
+\- Timeline
+
+\- Search
+
+\- Filters
+
+\- Analytics
+
+\- Review Queue
+
+\---
+
+### Sprint 10 — Deployment
+
+Deploy Tracker to production.
+
+### Infrastructure
+
+\- AWS EC2
+
+\- PostgreSQL
+
+\- Docker
+
+\- Nginx
+
+\- HTTPS
+
+\- Domain Setup
+
+#### CI/CD
+
+\- GitHub Actions
+
+\- Automated Deployment
+
+\- Environment Configuration
+
+\---
+
+# Stretch Goals (v3)
+
+### Email Providers
+
+\- Outlook
+
+\- Yahoo
+
+\- Generic IMAP
+
+### AI
+
+\- AI Email Summaries
+
+\- Company Enrichment
+
+\- Salary Extraction
+
+\- Resume Parsing
+
+### Integrations
+
+\- Google Calendar
+
+\- Browser Extension
+
+\- Notifications
+
+\- Slack
+
+\- Discord
+
+### SaaS
+
+\- Multi-user Support
+
+\- Team Workspaces
+
+\- Organization Dashboard
+
+\---
+
+# Estimated Timeline
+
+\| Sprint | Focus | Duration |
+
+\|---------|-------|----------|
+
+\| Sprint 1 | Backend Architecture | ✅ Completed |
+
+\| Sprint 2 | Email Intelligence | 5–7 days |
+
+\| Sprint 3 | Application Lifecycle Tracking | 4–5 days |
+
+\| Sprint 4 | Background Processing | 3–4 days |
+
+\| Sprint 5 | Human Review Queue | 3 days |
+
+\| Sprint 6 | ML Improvements | 5–7 days |
+
+\| Sprint 7 | Analytics Engine | 3 days |
+
+\| Sprint 8 | Production Readiness | 5 days |
+
+\| Sprint 9 | Frontend Integration | 5–7 days |
+
+\| Sprint 10 | Deployment | 3–4 days |
+
+\---
+
+# Final Deliverable
+
+Tracker will evolve into a production-ready \*\*Job Application Intelligence Platform\*\* capable of:
+
+\- Automatic Gmail synchronization
+
+\- Intelligent email understanding
+
+\- Hybrid Rules + ML classification
+
+\- Application lifecycle tracking
+
+\- Timeline-based status updates
+
+\- Human-in-the-loop learning
+
+\- Analytics dashboard
+
+\- Scalable layered architecture
+
+\- Production-ready deployment
+
+\- Future multi-provider support

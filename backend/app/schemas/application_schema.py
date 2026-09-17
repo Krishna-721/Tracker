@@ -18,11 +18,16 @@ class JobApplicationCreate(JobApplicationBase):
 
 class JobApplicationResponse(JobApplicationBase):
     id: int
-    subject: Optional[str]=None
-    created_at: datetime
-    updated_at: datetime
+    
+    subject: Optional[str] = None
 
-    model_config=ConfigDict(from_attributes=True)
+    confidence: Optional[float] = None
+    classification_method: Optional[str] = None
+    needs_review: bool
+    created_at: datetime
+    updated_at: datetime 
+
+    model_config = ConfigDict(from_attributes=True)
 
 class EmailInput(BaseModel):
     subject: str
